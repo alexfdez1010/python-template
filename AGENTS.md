@@ -77,24 +77,6 @@ uv run <command>
 
 **Note**: `uv run` automatically ensures the environment is synced before execution. No need to manually activate the virtual environment.
 
-### Manual Environment Activation (Optional)
-
-If you prefer traditional workflow:
-
-```bash
-# Sync first
-uv sync
-
-# Activate virtual environment
-source .venv/bin/activate  # Unix/macOS
-# or
-.venv\Scripts\activate     # Windows
-
-# Run commands directly
-python -m <package_name>.main
-pytest tests/
-```
-
 ## Makefile Targets
 
 The `Makefile` provides convenient shortcuts for common tasks:

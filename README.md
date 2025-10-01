@@ -1,6 +1,6 @@
 # Python Template
 
-A modern Python project template using [uv](https://docs.astral.sh/uv/) for fast dependency management, pytest for testing, and Ruff for code quality.
+A modern Python project template using [uv](https://docs.astral.sh/uv/) for fast dependency management, pytest for testing, and Ruff for code quality. It includes a `AGENTS.md` file with AI Agent coding assistant guidelines to develop quality code.
 
 ## 🚀 Features
 

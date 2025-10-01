@@ -481,7 +481,101 @@ uv run pytest tests/unit/test_file.py::test_function -s
 
 ## Best Practices
 
-### 1. Type Hints
+### 1. SOLID Principles
+
+**CRITICAL**: Follow SOLID principles as closely as possible in all code:
+
+- **Single Responsibility Principle (SRP)**: Each class/function should have one reason to change
+  ```python
+  # Good: Separate concerns
+  class UserRepository:
+      def save(self, user: User) -> None: ...
+  
+  class UserValidator:
+      def validate(self, user: User) -> bool: ...
+  
+  # Bad: Multiple responsibilities
+  class UserManager:
+      def save(self, user: User) -> None: ...
+      def validate(self, user: User) -> bool: ...
+      def send_email(self, user: User) -> None: ...
+  ```
+
+- **Open/Closed Principle (OCP)**: Open for extension, closed for modification
+  ```python
+  # Good: Use protocols/abstract base classes
+  class DataProcessor(Protocol):
+      def process(self, data: dict) -> dict: ...
+  
+  class JSONProcessor:
+      def process(self, data: dict) -> dict: ...
+  
+  class XMLProcessor:
+      def process(self, data: dict) -> dict: ...
+  ```
+
+- **Liskov Substitution Principle (LSP)**: Subtypes must be substitutable for base types
+  ```python
+  # Ensure derived classes don't break base class contracts
+  class Bird(Protocol):
+      def move(self) -> None: ...
+  
+  class Sparrow:
+      def move(self) -> None:
+          # Implementation that flies
+          pass
+  ```
+
+- **Interface Segregation Principle (ISP)**: Many specific interfaces over one general
+  ```python
+  # Good: Specific protocols
+  class Readable(Protocol):
+      def read(self) -> str: ...
+  
+  class Writable(Protocol):
+      def write(self, data: str) -> None: ...
+  
+  # Bad: Fat interface
+  class FileOperations(Protocol):
+      def read(self) -> str: ...
+      def write(self, data: str) -> None: ...
+      def delete(self) -> None: ...
+      def compress(self) -> None: ...
+  ```
+
+- **Dependency Inversion Principle (DIP)**: Depend on abstractions, not concretions
+  ```python
+  # Good: Depend on protocol
+  class Service:
+      def __init__(self, repository: DataRepository):
+          self.repository = repository
+  
+  # Bad: Depend on concrete implementation
+  class Service:
+      def __init__(self):
+          self.repository = PostgreSQLRepository()
+  ```
+
+### 2. File Length Limit
+
+**MANDATORY**: Keep all Python files under **150 lines**. If a file exceeds this limit:
+
+1. **Refactor immediately** - split into multiple focused modules
+2. **Extract classes/functions** into separate files
+3. **Group related functionality** into subpackages
+4. **Use clear naming** for new modules
+
+Example refactoring:
+```python
+# Before: large_module.py (200+ lines)
+# After: Split into:
+# - large_module/core.py
+# - large_module/validators.py
+# - large_module/processors.py
+# - large_module/__init__.py (exports public API)
+```
+
+### 3. Type Hints
 
 Use type hints for better code clarity and IDE support:
 
@@ -496,7 +590,7 @@ def process_data(
     return {"count": len(data)}
 ```
 
-### 2. Error Handling
+### 4. Error Handling
 
 Be explicit with error handling:
 
@@ -511,7 +605,7 @@ except Exception as e:
     raise RuntimeError("Operation failed") from e
 ```
 
-### 3. Documentation
+### 5. Documentation
 
 Use docstrings for modules, classes, and functions ALWAYS:
 
@@ -540,13 +634,136 @@ def calculate_score(
     return (correct / total) * weight
 ```
 
-### 4. Testing Philosophy
+### 6. Testing Philosophy
 
 - **Write tests first** (TDD) when possible
 - **Mock external dependencies** in unit tests
 - **Test edge cases** and error conditions
 - **Keep tests fast** - unit tests should run in milliseconds
 - **Integration tests** should verify real-world scenarios
+
+### 7. Additional Software Engineering Practices
+
+#### DRY (Don't Repeat Yourself)
+- Extract repeated code into functions/classes
+- Use inheritance or composition to share behavior
+- Create utility modules for common operations
+
+#### YAGNI (You Aren't Gonna Need It)
+- Don't add functionality until it's needed
+- Avoid over-engineering solutions
+- Keep implementations simple and focused
+
+#### Composition Over Inheritance
+```python
+# Prefer composition
+class EmailService:
+    def __init__(self, sender: MessageSender, formatter: MessageFormatter):
+        self.sender = sender
+        self.formatter = formatter
+
+# Over deep inheritance hierarchies
+class EmailService(BaseService, LoggingMixin, ValidationMixin):
+    pass
+```
+
+#### Immutability When Possible
+```python
+from dataclasses import dataclass
+
+@dataclass(frozen=True)  # Immutable
+class Config:
+    api_key: str
+    timeout: int
+```
+
+#### Explicit is Better Than Implicit
+```python
+# Good: Clear and explicit
+def process_user(user_id: int, send_email: bool = False) -> User:
+    user = get_user(user_id)
+    if send_email:
+        send_welcome_email(user)
+    return user
+
+# Bad: Hidden side effects
+def process_user(user_id: int) -> User:
+    user = get_user(user_id)
+    send_welcome_email(user)  # Unexpected side effect
+    return user
+```
+
+#### Fail Fast
+```python
+def divide(a: int, b: int) -> float:
+    if b == 0:
+        raise ValueError("Cannot divide by zero")
+    return a / b
+```
+
+#### Use Context Managers
+```python
+# Good: Automatic resource cleanup
+with open("file.txt") as f:
+    data = f.read()
+
+# For custom resources
+from contextlib import contextmanager
+
+@contextmanager
+def database_connection():
+    conn = create_connection()
+    try:
+        yield conn
+    finally:
+        conn.close()
+```
+
+#### Avoid Magic Numbers
+```python
+# Good: Named constants
+MAX_RETRIES = 3
+TIMEOUT_SECONDS = 30
+
+def fetch_data():
+    for attempt in range(MAX_RETRIES):
+        try:
+            return request_with_timeout(TIMEOUT_SECONDS)
+        except TimeoutError:
+            continue
+
+# Bad: Magic numbers
+def fetch_data():
+    for attempt in range(3):
+        try:
+            return request_with_timeout(30)
+        except TimeoutError:
+            continue
+```
+
+#### Guard Clauses
+```python
+# Good: Early returns
+def process_order(order: Order) -> None:
+    if not order.is_valid():
+        raise ValueError("Invalid order")
+    
+    if order.is_cancelled():
+        return
+    
+    if order.is_completed():
+        return
+    
+    # Main logic here
+    process_payment(order)
+
+# Bad: Nested conditions
+def process_order(order: Order) -> None:
+    if order.is_valid():
+        if not order.is_cancelled():
+            if not order.is_completed():
+                process_payment(order)
+```
 
 ## Troubleshooting
 

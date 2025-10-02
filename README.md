@@ -28,7 +28,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 ```bash
 # Clone the repository
-git clone <your-repo-url>
+git clone https://github.com/alexfdez1010/python-template
 cd python-template
 
 # Sync dependencies (creates .venv and installs packages)
